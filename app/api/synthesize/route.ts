@@ -3,7 +3,7 @@ import axios from 'axios';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const { text, speed } = await request.json();
 
     if (!text) {
       return NextResponse.json(
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
         },
         audioConfig: {
           audioEncoding: 'MP3',
+          speakingRate: speed || 1.0,
         },
       },
       {
