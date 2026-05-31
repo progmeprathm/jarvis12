@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};
 
 export async function POST(request: NextRequest) {
+  let tempAudioPath: string | null = null;
+  let tempOutputPath: string | null = null;
+
   try {
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
@@ -12,39 +29,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const deepgramApiKey = process.env.DEEPGRAM_API_KEY;
-    if (!deepgramApiKey) {
+    // Create temp files
+    const tempDir = path.join('/tmp', 'jarvis-audio');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    tempAudioPath = path.join(tempDir, `audio-${Date.now()}.wav`);
+    tempOutputPath = path.join(tempDir, `output-${Date.now()}.txt`);
+
+    // Save uploaded audio
+    const buffer = await audioFile.arrayBuffer();
+    fs.writeFileSync(tempAudioPath, Buffer.from(buffer));
+
+    // Run Whisper (make sure it's installed: pip install openai-whisper)
+    const whisperModel = process.env.WHISPER_MODEL || 'base';
+    const command = `whisper "${tempAudioPath}" --model ${whisperModel} --output_format txt --output_dir "${tempDir}" --task transcribe`;
+
+    try {
+      await execAsync(command);
+    } catch (error: any) {
+      console.error('Whisper error:', error);
       return NextResponse.json(
-        { error: 'Deepgram API key not configured' },
+        { error: 'Whisper not installed. Install with: pip install openai-whisper' },
         { status: 500 }
       );
     }
 
-    const audioBuffer = await audioFile.arrayBuffer();
+    // Read transcription result
+    const baseName = path.basename(tempAudioPath, '.wav');
+    const transcriptPath = path.join(tempDir, `${baseName}.txt`);
 
-    const deepgramResponse = await fetch(
-      'https://api.deepgram.com/v1/listen',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Token ${deepgramApiKey}`,
-          'Content-Type': 'audio/wav',
-        },
-        body: audioBuffer,
-      }
-    );
-
-    if (!deepgramResponse.ok) {
-      console.error('Deepgram error:', await deepgramResponse.text());
+    if (!fs.existsSync(transcriptPath)) {
       return NextResponse.json(
         { error: 'Transcription failed' },
         { status: 500 }
       );
     }
 
-    const deepgramData: any = await deepgramResponse.json();
-    const transcript =
-      deepgramData.results?.channels[0]?.alternatives[0]?.transcript || '';
+    const transcript = fs.readFileSync(transcriptPath, 'utf-8').trim();
+
+    // Cleanup
+    if (fs.existsSync(tempAudioPath)) fs.unlinkSync(tempAudioPath);
+    if (fs.existsSync(transcriptPath)) fs.unlinkSync(transcriptPath);
 
     return NextResponse.json({ text: transcript });
   } catch (error) {
@@ -53,5 +80,14 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    // Cleanup temp files
+    if (tempAudioPath && fs.existsSync(tempAudioPath)) {
+      try {
+        fs.unlinkSync(tempAudioPath);
+      } catch (e) {
+        console.error('Cleanup error:', e);
+      }
+    }
   }
 }

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OpenAI } from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+interface OllamaMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,39 +16,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    const ollamaUrl = process.env.OLLAMA_API_URL || 'http://localhost:11434';
+    const ollamaModel = process.env.OLLAMA_MODEL || 'llama2';
+    const systemPrompt = process.env.JARVIS_SYSTEM_PROMPT || 
+      'You are Jarvis, a witty and helpful AI assistant. Keep your answers to 1-2 short sentences.';
+
+    // Prepare messages for Ollama
+    const messages: OllamaMessage[] = [
+      {
+        role: 'system',
+        content: systemPrompt,
+      },
+      {
+        role: 'user',
+        content: userMessage,
+      },
+    ];
+
+    // Call Ollama API
+    const response = await fetch(`${ollamaUrl}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: ollamaModel,
+        messages: messages,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Ollama error:', error);
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
+        { error: `Ollama API error: Make sure Ollama is running on ${ollamaUrl}` },
         { status: 500 }
       );
     }
 
-    const systemPrompt = process.env.JARVIS_SYSTEM_PROMPT || 
-      'You are Jarvis, a witty and helpful AI assistant. Keep your answers to 1-2 short sentences.';
-
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        {
-          role: 'user',
-          content: userMessage,
-        },
-      ],
-      max_tokens: 150,
-      temperature: 0.7,
-    });
-
-    const jarvisResponse = response.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+    const data: any = await response.json();
+    const jarvisResponse = data.message?.content || 'I apologize, but I could not generate a response.';
 
     return NextResponse.json({ response: jarvisResponse });
   } catch (error) {
     console.error('Chat error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate response' },
+      { error: 'Failed to generate response. Make sure Ollama is running.' },
       { status: 500 }
     );
   }

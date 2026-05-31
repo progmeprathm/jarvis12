@@ -1,7 +1,7 @@
 {
-  "name": "jarvis-nextjs",
-  "version": "1.0.0",
-  "description": "JARVIS - Voice AI Assistant powered by Next.js",
+  "name": "jarvis-nextjs-free",
+  "version": "2.0.0",
+  "description": "JARVIS - Voice AI Assistant powered by Next.js (100% Free & Open Source)",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,9 +12,7 @@
   "dependencies": {
     "next": "^14.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "openai": "^4.28.0",
-    "dotenv": "^16.3.1"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

@@ -57,6 +57,27 @@ body {
   font-size: 1.2em;
 }
 
+.sidebar h4 {
+  color: #764ba2;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 0.95em;
+}
+
+.tech-stack ul {
+  list-style: none;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+}
+
+.tech-stack li {
+  padding: 5px 0;
+  color: #333;
+}
+
 .status {
   background: #f0f0f0;
   padding: 15px;

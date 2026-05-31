@@ -75,8 +75,8 @@ export default function Home() {
 
   const processAudio = async (audioBlob: Blob) => {
     try {
-      // Step 1: Transcribe audio
-      setStatus('📝 Transcribing audio...');
+      // Step 1: Transcribe audio with Whisper
+      setStatus('📝 Transcribing audio (Whisper)...');
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.wav');
 
@@ -86,7 +86,8 @@ export default function Home() {
       });
 
       if (!transcribeResponse.ok) {
-        throw new Error('Transcription failed');
+        const error = await transcribeResponse.json();
+        throw new Error(error.error || 'Transcription failed');
       }
 
       const transcribeData = await transcribeResponse.json();
@@ -100,8 +101,8 @@ export default function Home() {
 
       addMessage('user', userText);
 
-      // Step 2: Get GPT response
-      setStatus('🤖 Generating response...');
+      // Step 2: Get response with Ollama
+      setStatus('🤖 Generating response (Ollama)...');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,7 +113,8 @@ export default function Home() {
       });
 
       if (!chatResponse.ok) {
-        throw new Error('Chat request failed');
+        const error = await chatResponse.json();
+        throw new Error(error.error || 'Chat request failed');
       }
 
       const chatData = await chatResponse.json();
@@ -123,8 +125,8 @@ export default function Home() {
 
       addMessage('jarvis', jarvisResponse);
 
-      // Step 3: Generate speech
-      setStatus('🔊 Generating speech...');
+      // Step 3: Generate speech with Coqui TTS
+      setStatus('🔊 Generating speech (Coqui TTS)...');
       const synthesizeResponse = await fetch('/api/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,7 +134,8 @@ export default function Home() {
       });
 
       if (!synthesizeResponse.ok) {
-        throw new Error('Synthesis failed');
+        const error = await synthesizeResponse.json();
+        throw new Error(error.error || 'Synthesis failed');
       }
 
       const audioData = await synthesizeResponse.arrayBuffer();
@@ -170,7 +173,7 @@ export default function Home() {
     <div className="container">
       <div className="header">
         <h1>🤖 JARVIS</h1>
-        <p>Your AI Voice Assistant</p>
+        <p>Your AI Voice Assistant (100% Free & Open Source)</p>
       </div>
 
       <div className="main-content">
@@ -182,6 +185,15 @@ export default function Home() {
             isListening ? 'listening' : isProcessing ? 'processing' : ''
           }`}>
             {status}
+          </div>
+
+          <div className="tech-stack">
+            <h4>Tech Stack</h4>
+            <ul>
+              <li>🎤 OpenAI Whisper</li>
+              <li>🧠 Ollama (Llama 2)</li>
+              <li>🔊 Coqui TTS</li>
+            </ul>
           </div>
 
           <div className="controls">
