@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  api: {
-    responseLimit: '50mb',
-  },
+  // Config options go here
 };
 
 module.exports = nextConfig;

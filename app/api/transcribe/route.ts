@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-const speech = require('@google-cloud/speech');
-const language = require('@google-cloud/language');
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,8 +30,8 @@ export async function POST(request: NextRequest) {
       `https://speech.googleapis.com/v1/speech:recognize?key=${googleSttKey}`,
       {
         config: {
-          encoding: 'LINEAR16',
-          sampleRateHertz: 16000,
+          encoding: 'WEBM_OPUS',
+          sampleRateHertz: 48000,
           languageCode: 'en-US',
         },
         audio: {
@@ -59,8 +57,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ text: transcript });
-  } catch (error) {
-    console.error('Transcription error:', error);
+  } catch (error: any) {
+    console.error('Transcription error details:', error.response?.data || error.message || error);
     return NextResponse.json(
       { error: 'Transcription failed' },
       { status: 500 }

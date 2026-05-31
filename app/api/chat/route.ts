@@ -3,11 +3,11 @@ import axios from 'axios';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userMessage } = await request.json();
+    const { userMessage, image } = await request.json();
 
-    if (!userMessage) {
+    if (!userMessage && !image) {
       return NextResponse.json(
-        { error: 'No user message provided' },
+        { error: 'No user message or image provided' },
         { status: 400 }
       );
     }
@@ -23,11 +23,29 @@ export async function POST(request: NextRequest) {
     const systemPrompt = process.env.JARVIS_SYSTEM_PROMPT || 
       'You are Jarvis, a witty and helpful AI assistant. Keep your answers to 1-2 short sentences.';
 
-    // Call Groq API (Free tier available)
+    // Construct the user message content.
+    // Llama 4 Scout supports standard OpenAI vision payload formats.
+    let userContent: any = userMessage || '';
+    if (image) {
+      userContent = [
+        {
+          type: 'text',
+          text: userMessage || 'Describe this image and answer my query.',
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: image,
+          },
+        },
+      ];
+    }
+
+    // Call Groq API (using the multimodal Llama 4 Scout model)
     const response = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'mixtral-8x7b-32768', // Free model
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: [
           {
             role: 'system',
@@ -35,7 +53,7 @@ export async function POST(request: NextRequest) {
           },
           {
             role: 'user',
-            content: userMessage,
+            content: userContent,
           },
         ],
         max_tokens: 150,
