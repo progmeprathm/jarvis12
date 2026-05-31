@@ -1,7 +1,7 @@
 {
-  "name": "jarvis-nextjs-free",
-  "version": "2.0.0",
-  "description": "JARVIS - Voice AI Assistant powered by Next.js (100% Free & Open Source)",
+  "name": "jarvis-nextjs-vercel",
+  "version": "1.0.0",
+  "description": "JARVIS - Voice AI Assistant for Vercel (Free APIs)",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,7 +12,8 @@
   "dependencies": {
     "next": "^14.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "axios": "^1.6.2"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,34 +12,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const coquiUrl = process.env.COQUI_TTS_URL || 'http://localhost:5002';
-
-    // Call Coqui TTS API
-    const response = await fetch(`${coquiUrl}/api/tts?text=${encodeURIComponent(text)}`, {
-      method: 'GET',
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Coqui error:', error);
+    const googleTtsKey = process.env.GOOGLE_TTS_API_KEY;
+    if (!googleTtsKey) {
       return NextResponse.json(
-        { error: `Coqui TTS API error: Make sure Coqui TTS is running on ${coquiUrl}` },
+        { error: 'Google Cloud Text-to-Speech API key not configured' },
         { status: 500 }
       );
     }
 
-    const audioBuffer = await response.arrayBuffer();
+    // Call Google Cloud Text-to-Speech API
+    const response = await axios.post(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleTtsKey}`,
+      {
+        input: {
+          text: text,
+        },
+        voice: {
+          languageCode: 'en-US',
+          name: 'en-US-Neural2-A',
+        },
+        audioConfig: {
+          audioEncoding: 'MP3',
+        },
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    return new NextResponse(audioBuffer, {
+    const audioContent = response.data.audioContent;
+    if (!audioContent) {
+      return NextResponse.json(
+        { error: 'Failed to generate audio' },
+        { status: 500 }
+      );
+    }
+
+    const buffer = Buffer.from(audioContent, 'base64');
+
+    return new NextResponse(buffer, {
       headers: {
-        'Content-Type': 'audio/wav',
+        'Content-Type': 'audio/mpeg',
         'Cache-Control': 'no-cache',
       },
     });
   } catch (error) {
     console.error('Synthesis error:', error);
     return NextResponse.json(
-      { error: 'Internal server error. Make sure Coqui TTS is running.' },
+      { error: 'Failed to generate speech' },
       { status: 500 }
     );
   }

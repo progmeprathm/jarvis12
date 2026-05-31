@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import './globals.css';
 
 interface Message {
@@ -17,9 +17,6 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const conversationContextRef = useRef<string>(
-    'You are Jarvis, a witty and helpful AI assistant. Keep your answers to 1-2 short sentences.'
-  );
 
   const addMessage = (type: 'user' | 'jarvis', content: string) => {
     const newMessage: Message = {
@@ -75,8 +72,8 @@ export default function Home() {
 
   const processAudio = async (audioBlob: Blob) => {
     try {
-      // Step 1: Transcribe audio with Whisper
-      setStatus('📝 Transcribing audio (Whisper)...');
+      // Step 1: Transcribe audio
+      setStatus('📝 Transcribing audio (Google Cloud)...');
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.wav');
 
@@ -101,14 +98,13 @@ export default function Home() {
 
       addMessage('user', userText);
 
-      // Step 2: Get response with Ollama
-      setStatus('🤖 Generating response (Ollama)...');
+      // Step 2: Get GPT response
+      setStatus('🤖 Generating response (Groq)...');
       const chatResponse = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userMessage: userText,
-          conversationContext: conversationContextRef.current,
         }),
       });
 
@@ -120,13 +116,10 @@ export default function Home() {
       const chatData = await chatResponse.json();
       const jarvisResponse = chatData.response;
 
-      // Update conversation context
-      conversationContextRef.current += `\nUser: ${userText}\nJarvis: ${jarvisResponse}`;
-
       addMessage('jarvis', jarvisResponse);
 
-      // Step 3: Generate speech with Coqui TTS
-      setStatus('🔊 Generating speech (Coqui TTS)...');
+      // Step 3: Generate speech
+      setStatus('🔊 Generating speech (Google Cloud)...');
       const synthesizeResponse = await fetch('/api/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -164,8 +157,6 @@ export default function Home() {
 
   const clearConversation = () => {
     setMessages([]);
-    conversationContextRef.current =
-      'You are Jarvis, a witty and helpful AI assistant. Keep your answers to 1-2 short sentences.';
     setStatus('✅ Ready');
   };
 
@@ -173,11 +164,10 @@ export default function Home() {
     <div className="container">
       <div className="header">
         <h1>🤖 JARVIS</h1>
-        <p>Your AI Voice Assistant (100% Free & Open Source)</p>
+        <p>Free AI Voice Assistant (Vercel Hosted)</p>
       </div>
 
       <div className="main-content">
-        {/* Sidebar */}
         <div className="sidebar">
           <h3>Controls</h3>
 
@@ -190,9 +180,9 @@ export default function Home() {
           <div className="tech-stack">
             <h4>Tech Stack</h4>
             <ul>
-              <li>🎤 OpenAI Whisper</li>
-              <li>🧠 Ollama (Llama 2)</li>
-              <li>🔊 Coqui TTS</li>
+              <li>🎤 Google Cloud STT</li>
+              <li>🤖 Groq LLM</li>
+              <li>🔊 Google Cloud TTS</li>
             </ul>
           </div>
 
@@ -214,7 +204,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Conversation Panel */}
         <div className="conversation-panel">
           <h3>Conversation</h3>
           <div className="conversation-list">

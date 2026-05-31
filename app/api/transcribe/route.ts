@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import axios from 'axios';
 
-const execAsync = promisify(exec);
-
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-};
+const speech = require('@google-cloud/speech');
+const language = require('@google-cloud/language');
 
 export async function POST(request: NextRequest) {
-  let tempAudioPath: string | null = null;
-  let tempOutputPath: string | null = null;
-
   try {
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
@@ -29,65 +16,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create temp files
-    const tempDir = path.join('/tmp', 'jarvis-audio');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+    const googleSttKey = process.env.GOOGLE_STT_API_KEY;
+    if (!googleSttKey) {
+      return NextResponse.json(
+        { error: 'Google Cloud Speech-to-Text API key not configured' },
+        { status: 500 }
+      );
     }
 
-    tempAudioPath = path.join(tempDir, `audio-${Date.now()}.wav`);
-    tempOutputPath = path.join(tempDir, `output-${Date.now()}.txt`);
-
-    // Save uploaded audio
     const buffer = await audioFile.arrayBuffer();
-    fs.writeFileSync(tempAudioPath, Buffer.from(buffer));
+    const base64Audio = Buffer.from(buffer).toString('base64');
 
-    // Run Whisper (make sure it's installed: pip install openai-whisper)
-    const whisperModel = process.env.WHISPER_MODEL || 'base';
-    const command = `whisper "${tempAudioPath}" --model ${whisperModel} --output_format txt --output_dir "${tempDir}" --task transcribe`;
+    // Call Google Cloud Speech-to-Text API
+    const response = await axios.post(
+      `https://speech.googleapis.com/v1/speech:recognize?key=${googleSttKey}`,
+      {
+        config: {
+          encoding: 'LINEAR16',
+          sampleRateHertz: 16000,
+          languageCode: 'en-US',
+        },
+        audio: {
+          content: base64Audio,
+        },
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    try {
-      await execAsync(command);
-    } catch (error: any) {
-      console.error('Whisper error:', error);
+    const transcript = response.data.results
+      ?.map((result: any) => result.alternatives[0].transcript)
+      .join(' ') || '';
+
+    if (!transcript) {
       return NextResponse.json(
-        { error: 'Whisper not installed. Install with: pip install openai-whisper' },
-        { status: 500 }
+        { error: 'Could not transcribe audio' },
+        { status: 400 }
       );
     }
-
-    // Read transcription result
-    const baseName = path.basename(tempAudioPath, '.wav');
-    const transcriptPath = path.join(tempDir, `${baseName}.txt`);
-
-    if (!fs.existsSync(transcriptPath)) {
-      return NextResponse.json(
-        { error: 'Transcription failed' },
-        { status: 500 }
-      );
-    }
-
-    const transcript = fs.readFileSync(transcriptPath, 'utf-8').trim();
-
-    // Cleanup
-    if (fs.existsSync(tempAudioPath)) fs.unlinkSync(tempAudioPath);
-    if (fs.existsSync(transcriptPath)) fs.unlinkSync(transcriptPath);
 
     return NextResponse.json({ text: transcript });
   } catch (error) {
     console.error('Transcription error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Transcription failed' },
       { status: 500 }
     );
-  } finally {
-    // Cleanup temp files
-    if (tempAudioPath && fs.existsSync(tempAudioPath)) {
-      try {
-        fs.unlinkSync(tempAudioPath);
-      } catch (e) {
-        console.error('Cleanup error:', e);
-      }
-    }
   }
 }
