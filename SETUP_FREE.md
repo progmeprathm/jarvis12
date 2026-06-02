@@ -1,273 +1,116 @@
-# JARVIS - 100% Free & Open Source Setup Guide
+# JARVIS - Local Running Guide (100% Free Cloud APIs)
 
-This version uses completely **free and open-source** tools:
-- 🎤 **Whisper** (OpenAI) - Speech-to-Text
-- 🧠 **Ollama** (Llama 2) - Local LLM
-- 🔊 **Coqui TTS** - Text-to-Speech
+This version of JARVIS runs locally on your machine but interfaces with **100% free cloud API tiers**:
+- **Groq API** for AI reasoning (using multimodal Llama 4 Scout).
+- **Google Cloud Speech-to-Text** for audio transcription.
+- **Google Cloud Text-to-Speech** for speech synthesis.
 
----
-
-## 📋 Requirements
-
-- Node.js 18+
-- Python 3.8+
-- 8GB RAM minimum (16GB recommended)
-- Good internet (for initial downloads only)
+Unlike previous versions, you **no longer** need to download heavy local models, run Python servers, or have large amounts of RAM. Setting up and running JARVIS locally takes less than 5 minutes!
 
 ---
 
-## ⚙️ Step 1: Install Whisper
+## 📋 Prerequisites
 
-Whisper handles speech-to-text. Install via pip:
-
-```bash
-# macOS / Linux
-pip install openai-whisper
-
-# Verify installation
-whisper --help
-
-# Pre-download a model (first run takes time)
-whisper path/to/any/audio.wav --model base
-```
-
-**Available models**: `tiny`, `base` (recommended), `small`, `medium`, `large`
-- Larger = better accuracy, slower
-- `base` is a good balance (~140MB)
+- **Node.js 18+** installed on your system.
+- A terminal of your choice.
+- Internet connection (to access the APIs).
+- API Keys (see step below).
 
 ---
 
-## ⚙️ Step 2: Install Ollama
+## ⚙️ Step 1: Obtain Free API Keys
 
-Ollama runs local LLMs without internet API calls:
+### 1. Groq API Key
+1. Visit the [Groq Console](https://console.groq.com).
+2. Sign up or log in.
+3. Click on **API Keys** in the sidebar.
+4. Click **Create API Key**, copy it, and save it.
 
-### **macOS / Windows / Linux**
-
-1. Download from: https://ollama.ai
-2. Install the application
-3. Open terminal and run:
-
-```bash
-# Download and run Llama 2 (4.7GB - first download takes 10-15 min)
-ollama pull llama2
-
-# Start Ollama server
-ollama serve
-
-# In another terminal, test it
-curl http://localhost:11434/api/chat -d '{
-  "model": "llama2",
-  "messages": [{"role": "user", "content": "Say hello"}],
-  "stream": false
-}'
-```
-
-**Keep Ollama running** in background while using JARVIS.
-
-**Alternative lighter models:**
-```bash
-ollama pull mistral        # Smaller, faster
-ollama pull neural-chat    # Lightweight
-ollama pull phi            # Very light
-```
+### 2. Google Cloud API Key
+1. Go to the [Google Cloud Console](https://console.cloud.google.com).
+2. Create a new project.
+3. Search for and enable the following APIs:
+   - **Cloud Speech-to-Text API**
+   - **Cloud Text-to-Speech API**
+4. Go to **APIs & Services > Credentials**.
+5. Click **Create Credentials** and select **API Key**.
+6. Copy the generated API key (it will be used for both STT and TTS).
+7. Copy your Google Cloud project ID from the dashboard.
 
 ---
 
-## ⚙️ Step 3: Install Coqui TTS
+## 🚀 Step 2: Running JARVIS Locally
 
-Coqui TTS generates speech from text:
-
-```bash
-# Install Coqui TTS
-pip install TTS
-
-# Start TTS server
-tts_server --model_name tts_models/en/ljspeech/tacotron2-DDC --port 5002
-
-# Test it (in another terminal)
-curl "http://localhost:5002/api/tts?text=hello%20world"
-```
-
-**Keep TTS server running** in another terminal while using JARVIS.
-
-**Alternative models** (if first one is slow):
-```bash
-# Lightweight
-tts_server --model_name tts_models/en/ljspeech/glow-tts --port 5002
-
-# Very fast
-tts_server --model_name tts_models/en/ljspeech/fastpitch --port 5002
-```
-
----
-
-## 🚀 Step 4: Run JARVIS
-
-### Setup Next.js
-
-```bash
-# Clone and setup
-git clone https://github.com/progmeprathm/jarvis12.git
-cd jarvis12
-
-# Install npm dependencies
-npm install
-
-# Copy environment config
-cp .env.example .env.local
-
-# Run development server
-npm run dev
-```
-
-Open http://localhost:3000 in your browser!
-
----
-
-## 📊 Running Everything Together
-
-**Open 3 terminals:**
-
-### Terminal 1: Ollama
-```bash
-ollama serve
-```
-Output: `Listening on 127.0.0.1:11434`
-
-### Terminal 2: Coqui TTS
-```bash
-tts_server --model_name tts_models/en/ljspeech/tacotron2-DDC --port 5002
-```
-Output: `Running on http://0.0.0.0:5002`
-
-### Terminal 3: JARVIS (Next.js)
-```bash
-cd jarvis12
-npm run dev
-```
-Output: `Ready in XXXms`
-
-Then visit: **http://localhost:3000**
-
----
-
-## 🎤 How to Use
-
-1. Click **"Start Recording"**
-2. Speak into your microphone
-3. Click **"Stop Recording"**
-4. Watch the magic happen:
-   - 📝 Whisper transcribes your speech
-   - 🤖 Ollama generates a response
-   - 🔊 Coqui TTS converts response to audio
-
----
-
-## 🔧 Configuration
-
-Edit `.env.local` to customize:
-
-```env
-# Ollama settings
-OLLAMA_API_URL=http://localhost:11434
-OLLAMA_MODEL=llama2
-
-# Whisper settings
-WHISPER_MODEL=base              # tiny, base, small, medium, large
-
-# Coqui TTS settings
-COQUI_TTS_URL=http://localhost:5002
-
-# JARVIS personality
-JARVIS_SYSTEM_PROMPT=You are Jarvis, a witty and helpful AI assistant. Keep your answers to 1-2 short sentences.
-```
-
----
-
-## 💾 Storage Requirements
-
-| Component | Size | Download Time |
-|-----------|------|---------------|
-| Whisper (base) | 140 MB | 2-5 min |
-| Ollama Llama2 | 4.7 GB | 15-30 min |
-| Coqui TTS | 200 MB | 5-10 min |
-| **Total** | **~5 GB** | **~30 min** |
-
----
-
-## ⚡ Performance Tips
-
-### Faster Responses
-1. Use smaller models:
+1. **Clone the repository and install dependencies:**
    ```bash
-   ollama pull mistral  # Faster than llama2
+   git clone https://github.com/progmeprathm/jarvis12.git
+   cd jarvis12
+   npm install
    ```
 
-2. Use faster TTS:
+2. **Configure environment variables:**
+   Copy the example file to `.env.local`:
    ```bash
-   tts_server --model_name tts_models/en/ljspeech/glow-tts --port 5002
+   cp .env.example .env.local
    ```
 
-3. Use smaller Whisper model:
+   Open `.env.local` in your editor and add your keys:
    ```env
-   WHISPER_MODEL=tiny  # Fastest, but less accurate
+   GROQ_API_KEY=your_groq_api_key_here
+   GOOGLE_TTS_API_KEY=your_google_cloud_api_key_here
+   GOOGLE_STT_API_KEY=your_google_cloud_api_key_here
+   GOOGLE_PROJECT_ID=your_google_project_id_here
    ```
 
-### Better Accuracy
-1. Use larger models (but slower):
+3. **Start the development server:**
    ```bash
-   ollama pull neural-chat  # More coherent
-   WHISPER_MODEL=small  # Better transcription
+   npm run dev
    ```
+
+4. **Access the application:**
+   Open your browser and navigate to **[http://localhost:3000](http://localhost:3000)**.
+
+---
+
+## 🎙️ How to Use
+
+1. **Voice Mode**:
+   - Click **🎤 TAP TO SPEAK** to start recording.
+   - Speak into your microphone.
+   - Click **⏹️ TAP TO STOP** when done.
+   - JARVIS will transcribe, think, and play back the audio response with an animated waveform.
+
+2. **Text / Image Mode**:
+   - Type a query in the message input box and click **Send**.
+   - Click the **+** (Attach) button to upload an image, type your question, and submit to let Groq's Llama 4 Scout model analyze the image.
+
+3. **Accessibility Controls**:
+   - Change font size using **A**, **A+**, and **A++** buttons in the header.
+   - Adjust speech synthesis speed (Slower, Normal, Faster).
+   - Use the **Mute** button to silence speech responses and save API usage.
+
+---
+
+## 💰 Free Tier Usage Limits
+
+The APIs used in this project have generous free tiers:
+
+| Service | Free Tier Limit | Reset |
+|---|---|---|
+| **Groq API** | Free limits (per model) | Minutely/Daily |
+| **Google Speech-to-Text** | 60 minutes of audio / month | Monthly |
+| **Google Text-to-Speech** | 4 million characters / month | Monthly |
+
+*Tip: Mute the speech response in the header if you are only chatting via text to prevent utilizing Google TTS characters.*
 
 ---
 
 ## 🐛 Troubleshooting
 
-### "Ollama is not running"
-```bash
-# Make sure Ollama server is active
-ollama serve
-```
+### Microphone Access Denied
+- Ensure you have granted microphone permissions to your browser.
+- Browser security policies allow HTTP microphone access only on `localhost`. For production, HTTPS is required.
 
-### "Whisper not found"
-```bash
-# Install Whisper
-pip install openai-whisper
-```
-
-### "Coqui TTS not running"
-```bash
-# Start TTS server
-tts_server --model_name tts_models/en/ljspeech/tacotron2-DDC --port 5002
-```
-
-### "Microphone permission denied"
-- Check browser microphone permissions
-- HTTPS required in production (HTTP OK for localhost)
-
-### Slow responses
-- Reduce model sizes (see Performance Tips above)
-- Increase RAM
-- Use GPU acceleration (requires CUDA setup)
-
----
-
-## 📚 Resources
-
-- [OpenAI Whisper](https://github.com/openai/whisper)
-- [Ollama Documentation](https://ollama.ai)
-- [Coqui TTS GitHub](https://github.com/coqui-ai/TTS)
-- [Next.js Docs](https://nextjs.org/docs)
-
----
-
-## 💰 Cost
-
-**$0 - Completely Free!**
-
-All components are open-source and run locally on your machine.
-
----
-
-**Ready to run JARVIS locally? Start with the 3 terminals above!** 🚀
+### Google API Keys Not Working
+- Make sure both the **Cloud Speech-to-Text API** and **Cloud Text-to-Speech API** are fully enabled in your Google Cloud Project console.
+- Check if your API key has any restrictions that would block it from calling these APIs.

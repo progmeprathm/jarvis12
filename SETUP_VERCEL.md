@@ -1,131 +1,99 @@
-# JARVIS - Vercel Deployment Guide (Free APIs)
+# JARVIS - Vercel Deployment Guide (Free Cloud APIs)
 
-🚀 **Deploy to Vercel with completely FREE APIs!**
+🚀 **Deploy your personal JARVIS assistant to Vercel with completely FREE cloud APIs!**
+
+This guide outlines how to deploy the JARVIS web application, including its Apple Glass inspired UI, multi-modal features, and accessibility adjustments.
+
+---
 
 ## 🎯 Architecture
 
-- **Speech-to-Text**: Google Cloud Speech-to-Text (60 min/month free)
-- **AI LLM**: Groq API (unlimited free tier)
-- **Text-to-Speech**: Google Cloud Text-to-Speech (4M chars/month free)
+Our deployment utilizes three core cloud services, all running on zero-cost free tiers:
+- **Speech-to-Text**: Google Cloud Speech-to-Text (60 minutes/month free)
+- **AI LLM**: Groq API (generous developer limits) running Llama 4 Scout for image and text inputs
+- **Text-to-Speech**: Google Cloud Text-to-Speech (4 million characters/month free)
 
 ---
 
-## 📋 Step 1: Get Free API Keys
+## 📋 Step 1: Obtain API Keys
 
-### 1️⃣ **Groq API** (Free LLM)
+### 1️⃣ Groq API Key
+1. Go to [Groq Console](https://console.groq.com).
+2. Sign up or log in to your account.
+3. Select **API Keys** from the sidebar.
+4. Click **Create API Key**, copy, and save it.
 
-1. Go to: https://console.groq.com
-2. Sign up (free account)
-3. Navigate to **API Keys**
-4. Create a new API key
-5. Copy and save as `GROQ_API_KEY`
-
-✅ **Free Tier**: Unlimited requests!
-
----
-
-### 2️⃣ **Google Cloud APIs**
-
-1. Go to: https://console.cloud.google.com
-2. Create a new project
-3. Enable these APIs:
-   - Cloud Speech-to-Text
-   - Cloud Text-to-Speech
-4. Create an API key (Credentials → Create Credentials → API Key)
-5. Copy the API key and Project ID
-
-**Set as environment variables:**
-- `GOOGLE_STT_API_KEY` = your API key
-- `GOOGLE_TTS_API_KEY` = your API key
-- `GOOGLE_PROJECT_ID` = your project ID
-
-✅ **Free Tier**:
-- Speech-to-Text: 60 minutes/month
-- Text-to-Speech: 4 million characters/month
+### 2️⃣ Google Cloud Credentials
+1. Open the [Google Cloud Console](https://console.cloud.google.com).
+2. Create a new project or select an existing one.
+3. In the search bar, look up and enable:
+   - **Cloud Speech-to-Text API**
+   - **Cloud Text-to-Speech API**
+4. Navigate to **APIs & Services > Credentials**.
+5. Click **Create Credentials** -> **API Key**.
+6. Copy this API key. You will use it for both Speech-to-Text and Text-to-Speech.
+7. Copy your Google Cloud project ID (found on the homepage dashboard).
 
 ---
 
 ## 🌐 Step 2: Deploy to Vercel
 
 ### Setup Repository
+First, ensure your local repository changes are pushed to GitHub:
 
 ```bash
 git add .
-git commit -m "Add Vercel free APIs version"
+git commit -m "Configure JARVIS with Apple Glass UI and Groq + Google APIs"
 git push origin main
 ```
 
-### Deploy
+### Deploy to Vercel Dashboard
 
-1. Go to: https://vercel.com
-2. Click **"New Project"**
-3. Select **jarvis12** repository
-4. Add **Environment Variables**:
-   ```
-   GROQ_API_KEY = your_groq_key
-   GOOGLE_STT_API_KEY = your_google_stt_key
-   GOOGLE_TTS_API_KEY = your_google_tts_key
-   GOOGLE_PROJECT_ID = your_project_id
-   JARVIS_SYSTEM_PROMPT = You are Jarvis...
-   ```
-5. Click **"Deploy"** ✨
+1. Log in to [Vercel](https://vercel.com).
+2. Click **New Project** on your dashboard.
+3. Find your GitHub repository (`jarvis12`) and click **Import**.
+4. Expand the **Environment Variables** section and add the following keys:
+   
+   | Key | Value | Description |
+   |---|---|---|
+   | `GROQ_API_KEY` | `gsk_...` | Your Groq API Key |
+   | `GOOGLE_STT_API_KEY` | `AIzaSy...` | Your Google Cloud API Key |
+   | `GOOGLE_TTS_API_KEY` | `AIzaSy...` | Your Google Cloud API Key |
+   | `GOOGLE_PROJECT_ID` | `your-project-id` | Your Google Cloud Project ID |
+   | `JARVIS_SYSTEM_PROMPT` | `You are Jarvis...` | (Optional) Custom system instructions for the AI |
+
+5. Click **Deploy** and wait for the build to finish. Vercel will automatically provision a secure HTTPS domain for your live app!
 
 ---
 
 ## 📊 Free Tier Limits
 
-| Service | Limit | Resets |
-|---------|-------|--------|
-| **Groq LLM** | Unlimited | - |
-| **Google Speech-to-Text** | 60 min/month | Monthly |
-| **Google Text-to-Speech** | 4M chars/month | Monthly |
+| Service | Free Tier Allocation | Reset Period |
+|---|---|---|
+| **Groq LLM** | Standard developer tier limits | Minutely/Daily |
+| **Google Speech-to-Text** | 60 minutes of transcribed audio | Monthly |
+| **Google Text-to-Speech** | 4 million characters of synthesis | Monthly |
 
-**Example**: 100 conversations/month × ~30 seconds each = Within free tier ✅
-
----
-
-## ✨ Features
-
-✅ Completely free (no credit card after free trial)  
-✅ Deployed on Vercel (accessible anywhere)  
-✅ Fast responses (Groq is super fast)  
-✅ Easy to customize  
-✅ Production-ready
+*Tip: You can use the **Mute** button in the header of the deployed web interface to run chats silently and preserve your Google Cloud TTS characters.*
 
 ---
 
-## 🔗 Your Live App
+## ⚡ Features Out-of-the-box
 
-After deployment on Vercel, your JARVIS will be live at:
-```
-https://your-project.vercel.app
-```
-
----
-
-## 💡 Tips
-
-1. **Monitor Usage**: Check Google Cloud Console for usage
-2. **Set Alerts**: Get notified before limits
-3. **Upgrade Later**: Move to paid if needed
-4. **Test Locally**: Use `.env.local` before deploying
+- **Secure by Default**: Vercel handles SSL certificates automatically, which is a hard requirement for browser microphone permissions.
+- **Ultra-responsive**: Powered by Next.js edge routing and Groq's high-speed Llama inference engine.
+- **Accessibility Friendly**: Includes options to scale text size, adjust voice playback speed, and mute output.
 
 ---
 
 ## 🆘 Troubleshooting
 
 ### "API Key Invalid"
-- Check Google Cloud project has Speech-to-Text and Text-to-Speech enabled
-- Verify Groq API key is correct
+- Check that the Google Cloud project has both the **Cloud Speech-to-Text** and **Cloud Text-to-Speech** APIs fully enabled.
+- Verify your Groq API key is correct and not deactivated.
+
+### "Microphone Permission Denied"
+- Browsers only grant microphone access in secure contexts (HTTPS). When running on local networks or custom domains, make sure you are accessing the app via `https://`. (Default Vercel domains are HTTPS).
 
 ### "Quota Exceeded"
-- You've used your monthly free tier
-- Upgrade to paid plan or wait for reset
-
-### "Microphone Not Working"
-- Must use HTTPS (Vercel provides this automatically)
-- Check browser permissions
-
----
-
-**Ready? Deploy now!** 🚀
+- You have reached the monthly limit of your Google Cloud APIs or Groq rate limits. You can monitor your usage inside their respective consoles.
